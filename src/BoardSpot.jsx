@@ -21,7 +21,7 @@ const pieceTranslator = (pieceValue) => {
     return pieceValue.length > 2 ? translation[piecePart[0]][piecePart[1]] : "/ChessPieces/Blank.png";
 }
 
-export const BoardSpot = ({ board, piece, index, move, turn, setTurn }) => {
+export const BoardSpot = ({ board, piece, index, move, turn, setTurn, prevIndex, setPrevIndex }) => {
     let currentBackground = ((index + Math.floor(index / 8)) % 2 === 0) ? "white" : "grey";
 
     const possibleMoves = (pieceValue, index) => {
@@ -31,7 +31,7 @@ export const BoardSpot = ({ board, piece, index, move, turn, setTurn }) => {
         switch (pieceValue[2]) {
             case "P":
                 // First move!
-                let firstMove = myPiece === "W" ? index > 15 : index < 47;
+                let firstMove = myPiece === "W" ? index > 47 : index < 15;
                 if (firstMove) {
                     let move2 = myPiece === "W" ? index - 16 : index + 16;
                     if (board[move2][0] === " ") {
@@ -367,50 +367,60 @@ export const BoardSpot = ({ board, piece, index, move, turn, setTurn }) => {
         return validIndexes;
     }
 
-    const indexToValue = (index) => {
-        let translation = {
-            0: "a",
-            1: "b",
-            2: "c",
-            3: "d",
-            4: "e",
-            5: "f",
-            6: "g",
-            7: "h"
-        }
-        return `${translation[index % 8]}${Math.floor((64 - index) / 8) + 1}`;
+    const pickMovement = (end) => {
+        move(index, end);
+        setTurn(turn === "W" ? "B" : "W");
     }
 
-    const valueToIndex = (value) => {
-        let translation = {
-            "a": 7,
-            "b": 6,
-            "c": 5,
-            "d": 4,
-            "e": 3,
-            "f": 2,
-            "g": 1,
-            "h": 0
-        }
-        try {
-            return (value[1] - 1) * 8 + Number(translation[value[0]]);
-        } catch (e) {
-            console.error(e);
-            return "";
-        }
+    const toggleBackground = (indexes) => {
+        indexes.forEach((value) => {
+            let spot = document.getElementById(`boardSpot${value}`);
+            spot.style.backgroundColor = "yellow";
+            spot.onclick = () => {
+                pickMovement(value);
+                resetBackground(indexes);
+            }
+        })
     }
 
-    // const toggleBackground = (indexes) => {
-    //     indexes.forEach((value) => {
-    //         document.getElementById(`boardSpot${value}`).style.backgroundColor = "yellow";
-    //     })
-    // }
+    const resetBackground = (indexes) => {
+        indexes.forEach((value) => {
+            let spot = document.getElementById(`boardSpot${value}`);
+            spot.style.backgroundColor = ((value + Math.floor(value / 8)) % 2 === 0) ? "white" : "grey";
+            spot.onclick = clickPiece;
+        })
+    }
 
-    // const resetBackground = (indexes) => {
-    //     indexes.forEach((value) => {
-    //         document.getElementById(`boardSpot${value}`).style.backgroundColor = ((index + Math.floor(index / 8)) % 2 === 0) ? "white" : "grey";
-    //     })
-    // }
+    const clickPiece = () => {
+        resetBackground(prevIndex);
+        if (turn === piece[0]) {
+            let valid = possibleMoves(piece, index);
+            if (valid.length === 0) {
+                alert("Cannot move that piece");
+                return;
+            }
+            setPrevIndex(valid);
+            toggleBackground(valid);
+            // let userMove = prompt("Valid Moves: " + valid.map(indexToValue));
+            // console.log(userMove);
+            // userMove = valueToIndex(userMove);
+            // console.log(userMove);
+            // if (valid.includes(userMove)) {
+            //     move(index, userMove);
+            // } else {
+            //     alert("Invalid Choice");
+            //     return;
+            // }
+            // setTurn(turn === "W" ? "B" : "W");
+            // resetBackground(valid);
+        } else {
+            if (piece[0] === " ") {
+                alert("Cannot Move Nothing");
+            } else {
+                // alert("Not your turn!");
+            }
+        }
+    }
 
     return (
         <div
@@ -421,33 +431,7 @@ export const BoardSpot = ({ board, piece, index, move, turn, setTurn }) => {
                 margin: "0px",
                 backgroundColor: currentBackground
             }} >
-            <img width="100%" height="100%" src={pieceTranslator(piece)} onClick={() => {
-                if (turn === piece[0]) {
-                    let valid = possibleMoves(piece, index);
-                    if (valid.length === 0) {
-                        alert("Cannot move that piece");
-                        return;
-                    }
-                    console.log(valid);
-                    // toggleBackground(valid);
-                    let userMove = prompt("Valid Moves: " + valid.map(indexToValue));
-                    userMove = valueToIndex(userMove);
-                    if (valid.includes(userMove)) {
-                        move(index, userMove);
-                    } else {
-                        alert("Invalid Choice");
-                        return;
-                    }
-                    setTurn(turn === "W" ? "B" : "W");
-                    // resetBackground(valid);
-                } else {
-                    if (piece[0] === " ") {
-                        alert("Cannot Move Nothing");
-                    } else {
-                        alert("Not your turn!");
-                    }
-                }
-            }} />
+            <img width="100%" height="100%" src={pieceTranslator(piece)} onClick={clickPiece} />
         </div >
     )
 }

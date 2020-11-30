@@ -41,17 +41,27 @@ const fillBoard = () => {
     return tempBoard
 }
 
-export const Chessboard = () => {
+export const Chessboard = ({ turn, setTurn }) => {
     const [board, setBoard] = useState(fillBoard());
-    const [turn, setTurn] = useState("W");
+    const [prevIndex, setPrevIndex] = useState([]);
 
     const movePiece = (start, end) => {
         let tempBoard = [...board];
-        if (end > 55 && tempBoard[start][2] === "P") {
-            alert("CHANGE OUT PAWN");
+        if ((end > 55 || end < 8) && tempBoard[start][2] === "P") {
+            while (true) {
+                let choice = prompt("Swap out pawn (Q, B, R, N): ");
+                choice = choice.toUpperCase();
+                if (["Q", "B", "R", "N"].includes(choice)) {
+                    tempBoard[end] = tempBoard[start][0] + "_" + choice;
+                    tempBoard[start] = " ";
+                    setBoard(tempBoard);
+                    return;
+                }
+            }
         }
         if (board[end][2] === "K") {
-            alert("Game Over! " + board[end][0] === "W" ? "White Wins!" : "Black Wins!");
+            alert("Game Over! " + (board[end][0] === "B" ? "White Wins!" : "Black Wins!"));
+            window.location.reload();
         }
         tempBoard[end] = tempBoard[start];
         tempBoard[start] = " ";
@@ -59,7 +69,7 @@ export const Chessboard = () => {
     }
 
     return (
-        <div style={{
+        <div id="chessBoard" style={{
             display: "flex",
             flexDirection: "row",
             flexWrap: "wrap",
@@ -70,6 +80,8 @@ export const Chessboard = () => {
                 board.map((value, index) => {
                     return (
                         <BoardSpot
+                            prevIndex={prevIndex}
+                            setPrevIndex={setPrevIndex}
                             board={board}
                             turn={turn}
                             setTurn={setTurn}
